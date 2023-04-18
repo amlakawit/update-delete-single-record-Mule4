@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<flow name="update-flow" doc:id="1c864eda-26c5-4171-b496-38e4b062c547" >
+		<http:listener doc:name="/POST: update" doc:id="ffb3289f-54df-4479-b0d4-39af62fac5cd" config-ref="HTTP_Listener_config" path="/update" allowedMethods="POST"/>
+		<db:update doc:name="Update" doc:id="10fa374b-503b-4015-b7b8-4e54fdf55d53" config-ref="MySQL_Config">
+			<db:sql ><![CDATA[UPDATE customers 
+SET 
+    City = :City,
+    Country = :Country
+WHERE
+   CustomerID = :CustomerID;
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"CustomerID": attributes.queryParams.id,
+	"City": attributes.queryParams.city,
+	"Country": attributes.queryParams.country,
+	
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="6a8d021c-387c-4d62-8bf1-1bff74459761" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Record update successful!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="delete-flow" doc:id="9094d671-752b-4b03-bf31-98a97bec10e6" >
+		<http:listener doc:name="/POST: delete" doc:id="43637c53-9145-474f-bc40-449f4cd3e3bc" config-ref="HTTP_Listener_config" path="/delete" allowedMethods="POST" />
+		<db:delete doc:name="Delete" doc:id="0c23293e-7508-4225-9393-88a629561bc8" config-ref="MySQL_Config">
+			<db:sql ><![CDATA[DELETE FROM customers 
+WHERE
+    CustomerID = :CustomerID;
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"CustomerID": attributes.queryParams.id
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="d7428b4d-aa41-484e-93f6-4d227cddbd58" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Record delete successful!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
